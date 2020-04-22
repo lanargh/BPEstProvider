@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="http://yourdomain/BPEst" version="1.0.0" viewmodes="maximized">
+    <tizen:application id="VTjx8mKaQi.BPEst" package="VTjx8mKaQi" required_version="2.3.2"/>
+    <author email="latifanaharfiya@yahoo.com">Latifa</author>
+    <content src="index.html"/>
+    <feature name="http://tizen.org/feature/screen.size.normal"/>
+    <feature name="http://developer.samsung.com/tizen/feature/network.accessory_protocol"/>
+    <icon src="icon.png"/>
+    <tizen:metadata key="AccessoryServicesLocation" value="/res/xml/accessoryservices.xml"/>
+    <name>BPEst</name>
+    <tizen:privilege name="http://developer.samsung.com/privilege/accessoryprotocol"/>
+    <tizen:privilege name="http://tizen.org/privilege/healthinfo"/>
+    <tizen:profile name="wearable"/>
+    <tizen:setting background-support="enable" encryption="disable" hwkey-event="enable"/>
+</widget>
