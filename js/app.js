@@ -62,68 +62,6 @@ connectionListener = {
         }
     },
 
-    /* Connection between Provider and Consumer is established */
-    onconnect: function (socket) {
-        var onConnectionLost,
-            dataOnReceive;
-
-        createHTML("Service connection established");
-
-        /* Obtaining socket */
-        SASocket = socket;
-
-        onConnectionLost = function onConnectionLost (reason) {
-            createHTML("Service Connection disconnected due to following reason:<br />" + reason);
-        };
-
-        /* Inform when connection would get lost */
-        SASocket.setSocketStatusListener(onConnectionLost);
-
-        dataOnReceive =  function dataOnReceive (channelId, data) {
-        	var HRMrawsensor = tizen.sensorservice.getDefaultSensor("HRM_RAW");
-
-        	  if (!SAAgent.channelIds[0]) {
-                  createHTML("Something goes wrong...NO CHANNEL ID!");
-                  return;
-              }
-        	  
-          	/* Send socket to costumer */
-              function sendSensorData(hrmRaw){
-                   // return Data to Android
-                   SASocket.sendData(SAAgent.channelIds[0], 'PPG: '+hrmRaw);
-                   createHTML("Send message:<br />" +
-                               newData);
-                   //HRMrawsensor.stop();
-              }
-
-              function onsuccessCB(hrmInfo) {
-                  console.log('PPG: ' + hrmInfo.lightIntensity);
-                  sendSensorData(hrmInfo.lightIntensity);
-              }
-
-              function onerrorCB(error) {
-                  HRMrawsensor.stop();
-                  console.log('Error occurred: ' + error.message);
-              }
-
-              function onchangedCB() {
-                  // onsuccessCB function called at 8 ms Interval
-                  setInterval(function(){
-                      HRMrawsensor.getHRMRawSensorData(onsuccessCB, onerrorCB);
-                      }, 8);
-              }
-
-              HRMrawsensor.start(onchangedCB);    // start HRM raw sensor
-        	  
-        };
-
-        /* Set listener for incoming data from Consumer */
-        SASocket.setDataReceiveListener(dataOnReceive);
-    },
-    onerror: function (errorCode) {
-        createHTML("Service connection error<br />errorCode: " + errorCode);
-    }
-};
 
 
 function requestOnSuccess (agents) {
