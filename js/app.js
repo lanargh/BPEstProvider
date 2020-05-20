@@ -32,7 +32,8 @@
 var SAAgent,
     SASocket,
     connectionListener,
-    responseTxt = document.getElementById("responseTxt");
+    responseTxt = document.getElementById("responseTxt"),
+    HRMrawsensor = tizen.sensorservice.getDefaultSensor("HRM_RAW");
 
 /* Make Provider application running in background */
 tizen.application.getCurrentApplication().hide();
@@ -44,12 +45,15 @@ function createHTML(log_string)
     tau.openPopup("#toast");
 }
 
+
 connectionListener = {
     /* Remote peer agent (Consumer) requests a service (Provider) connection */
     onrequest: function (peerAgent) {
 
         createHTML("peerAgent: peerAgent.appName<br />" +
                     "is requesting Service conncetion...");
+        
+        console.log('peerAgent.appName: ' + peerAgent.appName);
 
         /* Check connecting peer by appName*/
         if (peerAgent.appName === "BPEst") {
@@ -62,6 +66,97 @@ connectionListener = {
         }
     },
 
+    /* Connection between Provider and Consumer is established */
+    onconnect: function (socket) {
+        var onConnectionLost,
+            dataOnReceive;
+
+        createHTML("Service connection established");
+
+        /* Obtaining socket */
+        SASocket = socket;
+
+        onConnectionLost = function onConnectionLost (reason) {
+            createHTML("Service Connection disconnected due to following reason:<br />" + reason);
+            HRMrawsensor.stop();
+        };
+
+        /* Inform when connection would get lost */
+        SASocket.setSocketStatusListener(onConnectionLost);
+
+        dataOnReceive =  function dataOnReceive (channelId, data) {
+        	
+        	  if (!SAAgent.channelIds[0]) {
+                  createHTML("Something goes wrong...NO CHANNEL ID!");
+                  return;
+              }
+          	  
+        	  /* Send socket to costumer */
+              function sendSensorData(hrmRaw, time){
+                   // return Data to Android
+                   SASocket.sendData(SAAgent.channelIds[0], 'PPG: '+hrmRaw + ' Timestamp: ' + time);
+                   //createHTML("Send message:<br />" + hrmRaw);
+              }
+
+              function onsuccessCB(hrmInfo) {
+            	  var date = new Date(Date.now());
+              	  var hours = date.getHours();
+              	  var minutes = "0" + date.getMinutes();
+              	  var seconds = "0" + date.getSeconds();
+              	  var ms = "0" +date.getMilliseconds();
+              	  var time = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2) + ':' + ms.substr(-3);
+
+                  console.log('PPG: ' + hrmInfo.lightIntensity + ' Timestamp: ' + time);
+                  //holding 15 seconds as HRM sensor needs some time
+                  setTimeout(function(){
+                      sendSensorData(hrmInfo.lightIntensity, time);
+                  },1500);
+              }
+
+              function onerrorCB(error) {
+                  HRMrawsensor.stop();
+                  console.log('Error occurred: ' + error.message);
+              }
+
+              function onchangedCB() {
+            	  console.log("Start HRMRaw sensor");
+                  // onsuccessCB function called at 50 ms Interval
+                  setInterval(function(){
+                      HRMrawsensor.getHRMRawSensorData(onsuccessCB, onerrorCB);
+                      }, 50);
+              }
+              
+              function onsuccessCBInfo(hardwareInfo)
+              {
+                 console.log("name: " + hardwareInfo.name);
+                 console.log("type: " + hardwareInfo.type);
+                 console.log("vendor: " + hardwareInfo.vendor);
+                 console.log("minValue: " + hardwareInfo.minValue);
+                 console.log("maxValue: " + hardwareInfo.maxValue);
+                 console.log("resolution: " + hardwareInfo.resolution);
+                 console.log("minInterval: " + hardwareInfo.minInterval);
+              }
+              
+
+        	  if (data === "Retrieving..."){
+                  console.log(data);
+                  HRMrawsensor.getSensorHardwareInfo(onsuccessCBInfo);
+                  HRMrawsensor.start(onchangedCB);    // start HRM raw sensor
+        	  }
+
+              // show Data to screen
+              var x = document.getElementById("val");
+              x.innerHTML = data;
+        };
+
+        /* Set listener for incoming data from Consumer */
+        SASocket.setDataReceiveListener(dataOnReceive);
+    },
+    onerror: function (errorCode) {
+        createHTML("Service connection error<br />errorCode: " + errorCode);
+        HRMrawsensor.stop();
+    }
+};
 
 
 function requestOnSuccess (agents) {
